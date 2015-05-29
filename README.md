@@ -29,3 +29,8 @@ the Haunted Mansion, Nightmare 3-D, Ken's Labyrinth.
 ##Sound Attrib##
 
 * toccata - wikipedia
+
+##Known Bugs##
+
+* sometimes boss doesn't seem to drop the gold key (numerical error with
+location?)
