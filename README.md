@@ -24,6 +24,7 @@ the Haunted Mansion, Nightmare 3-D, Ken's Labyrinth.
 * fake framebuffer post-processing fx
 * shooting hit detection with point vs. line distance check
 * handsomest game boss ever
+* secret passages (4 of them!)
 
 ##Sound Attrib##
 
