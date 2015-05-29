@@ -1,0 +1,258 @@
+<html>
+<head>
+<title>
+The Mansion of Dr Anton
+</title>
+<body>
+<canvas id="canvas">
+Your browser isn't supporting HTML5.
+</canvas>
+<p id="sorry_el" style="visibility:hidden;">
+</p>
+<p id="debug"></p>
+
+<!-- GUI text -->
+<p id="score_el" align="right" style="top:655px;left:180px;position:absolute;font-size:200%;color:lightgray;visibility:hidden;">
+Score<br />0
+</p>
+<p id="health_el" align="center" style="top:655px;left:340px;position:absolute;font-size:200%;color:lightgray;visibility:hidden;">
+Health<br />100%
+</p>
+<p id="ammo_el" align="right" style="top:655px;left:900px;position:absolute;font-size:200%;color:lightgray;visibility:hidden;">
+Ammo<br />0
+</p>
+
+</tr>
+</table>
+</body>
+</head>
+</html>
+<script id="title.vert" type="text/glsl">
+attribute vec2 vp;
+uniform vec2 scale, offset;
+varying vec2 st;
+
+void main () {
+	st = (vp + 1.0) * 0.5;
+	gl_Position = vec4 (vp * scale + offset, 0.0, 1.0);
+}
+</script>
+<script id="title.frag" type="text/glsl">
+precision mediump float;
+
+varying vec2 st;
+uniform sampler2D dm;
+
+void main () {
+	vec4 texel = texture2D (dm, st);
+	texel.rgb = pow (texel.rgb, vec3 (2.2, 2.2, 2.2)); 
+
+	gl_FragColor = texel;
+	
+	gl_FragColor.rgb = pow (gl_FragColor.rgb, vec3 (1.0 / 2.2, 1.0 / 2.2,
+		1.0 / 2.2));
+}
+</script>
+<script id="puff.vert" type="text/glsl">
+attribute vec2 vp;
+uniform vec2 scale, offset;
+varying vec2 st;
+
+void main () {
+	st = (vp + 1.0) * 0.5;
+	gl_Position = vec4 (vp * scale + offset, 0.0, 1.0);
+}
+</script>
+<script id="puff.frag" type="text/glsl">
+precision mediump float;
+
+varying vec2 st;
+uniform sampler2D dm;
+uniform float a;
+
+void main () {
+	vec4 texel = texture2D (dm, st);
+	texel.rgb = pow (texel.rgb, vec3 (2.2, 2.2, 2.2)); 
+
+	gl_FragColor = texel;
+	gl_FragColor.a *= a;
+	
+	gl_FragColor.rgb = pow (gl_FragColor.rgb, vec3 (1.0 / 2.2, 1.0 / 2.2,
+		1.0 / 2.2));
+}
+</script>
+<script id="heckler.vert" type="text/glsl">
+attribute vec3 vp;
+attribute vec2 vt;
+attribute vec3 vn;
+
+uniform mat4 PV, V, M;
+
+varying vec2 st;
+varying vec3 n;
+varying vec4 pos_c;
+
+void main () {
+	st = vt;
+	n = vec3 (PV * M * vec4 (vn, 0.0));
+	gl_Position = PV * M * vec4 (vp, 1.0);
+	pos_c = gl_Position;
+}
+</script>
+<script id="heckler.frag" type="text/glsl">
+precision mediump float;
+
+varying vec2 st;
+varying vec3 n;
+varying vec4 pos_c;
+uniform sampler2D dm;
+
+void main () {
+	vec4 texel = texture2D (dm, st);
+	texel.rgb = pow (texel.rgb, vec3 (2.2, 2.2, 2.2)); 
+
+	vec3 nn = normalize (n);
+	vec3 fwd = normalize (vec3 (0.0, 0.0, -1.0));
+	
+	gl_FragColor.rgb = texel.rgb;
+	gl_FragColor.a = texel.a;
+	
+	gl_FragColor.rgb = gl_FragColor.rgb * dot (nn, fwd) * 0.5
+		+ 0.5 * gl_FragColor.rgb;
+		
+	float z = pos_c.z / pos_c.w;
+	float lz = (2.0 * 0.1) / (30.0 + 0.1 - z * (30.0 - 0.1));
+	
+	float distf = pow (1.0 - lz, 4.0);
+	gl_FragColor.rgb *= vec3 (distf, distf, distf);
+	
+	gl_FragColor.rgb = pow (gl_FragColor.rgb, vec3 (1.0 / 2.2, 1.0 / 2.2,
+		1.0 / 2.2)); 
+	
+	//gl_FragColor.rgb = vec3 (lz, lz, lz);
+}
+</script>
+<script id="monster.vert" type="text/glsl">
+attribute vec3 vp;
+attribute vec2 vt;
+attribute vec3 vn;
+
+uniform mat4 PV, V, M;
+
+varying vec2 st;
+varying vec3 n;
+varying vec4 pos_c;
+
+void main () {
+	st = vt;
+	n = vec3 (PV * M * vec4 (vn, 0.0));
+	gl_Position = PV * M * vec4 (vp, 1.0);
+	pos_c = gl_Position;
+}
+</script>
+<script id="monster.frag" type="text/glsl">
+precision mediump float;
+
+varying vec2 st;
+varying vec3 n;
+varying vec4 pos_c;
+uniform sampler2D dm;
+uniform float t;
+
+void main () {
+	vec4 texel = texture2D (dm, st);
+	texel.rgb = pow (texel.rgb, vec3 (2.2, 2.2, 2.2)); 
+
+	vec3 nn = normalize (n);
+	vec3 fwd = normalize (vec3 (0.0, 0.0, -1.0));
+	
+	gl_FragColor.rgb = texel.rgb;
+	gl_FragColor.a = texel.a;
+	
+	gl_FragColor.rgb = gl_FragColor.rgb * dot (nn, fwd) * 0.5
+		+ 0.5 * gl_FragColor.rgb;
+		
+	float z = pos_c.z / pos_c.w;
+	float lz = (2.0 * 0.1) / (30.0 + 0.1 - z * (30.0 - 0.1));
+	
+	float distf = pow (1.0 - lz, 4.0);
+	gl_FragColor.rgb *= vec3 (distf, distf, distf);
+	
+	gl_FragColor.rgb = mix (gl_FragColor.rgb, vec3 (1.0, 1.0, 1.0),
+		abs (sin (t * 6.28)) * 0.5);
+	
+	gl_FragColor.rgb = pow (gl_FragColor.rgb, vec3 (1.0 / 2.2, 1.0 / 2.2,
+		1.0 / 2.2)); 
+}
+</script>
+<script id="torchlight.vert" type="text/glsl">
+attribute vec3 vp;
+attribute vec2 vt;
+
+uniform mat4 PV, M;
+
+varying vec2 st;
+
+void main () {
+	st = vt;
+	gl_Position = PV * M * vec4 (vp, 1.0);
+}
+</script>
+<script id="torchlight.frag" type="text/glsl">
+precision mediump float;
+
+varying vec2 st;
+uniform sampler2D dm;
+
+void main () {
+	vec4 texel = texture2D (dm, st);
+	texel.rgb = pow (texel.rgb, vec3 (2.2, 2.2, 2.2)); 
+
+	gl_FragColor.rgb = texel.rgb;
+	gl_FragColor.a = texel.a;
+		
+	gl_FragColor.rgb = pow (gl_FragColor.rgb, vec3 (1.0 / 2.2, 1.0 / 2.2,
+		1.0 / 2.2)); 
+}
+</script>
+<script id="cross.vert" type="text/glsl">
+attribute vec2 vp;
+varying vec2 st;
+
+void main () {
+	st = (vp + 1.0) * 0.5;
+	gl_Position = vec4 (vp, 0.0, 1.0);
+}
+</script>
+<script id="cross.frag" type="text/glsl">
+precision mediump float;
+
+varying vec2 st;
+uniform vec4 colour;
+uniform sampler2D dm;
+
+void main () {
+	vec4 texel = texture2D (dm, st);
+	texel.rgb = pow (texel.rgb, vec3 (2.2, 2.2, 2.2)); 
+
+	gl_FragColor = texel;
+	gl_FragColor = mix (gl_FragColor, colour, colour.a);
+	
+	gl_FragColor.rgb = pow (gl_FragColor.rgb, vec3 (1.0 / 2.2, 1.0 / 2.2,
+		1.0 / 2.2));
+}
+</script>
+<script src="js/howler.min.js"></script>
+<script src="js/sounds.js"></script>
+<script src="js/globals.js"></script>
+<script src="js/apg_maths.js"></script>
+<script src="js/camera.js"></script>
+<script src="js/obj_parser.js"></script>
+<script src="js/gl_utils.js"></script>
+<script src="js/title.js"></script>
+<script src="js/gui.js"></script>
+<script src="js/monsters.js"></script>
+<script src="js/secrets.js"></script>
+<script src="js/ground.js"></script>
+<script src="js/torchlight.js"></script>
+<script src="js/main.js"></script>
