@@ -11,6 +11,7 @@ into a mash-up of games I had in the '90s.
 
 ##Features##
 
+* awesome low-level WebGL hardware-accelerated 3d browser graphics in retro style
 * directional shading (instead of Phong etc.)
 * diminished lighting
 * manual gamma correction
