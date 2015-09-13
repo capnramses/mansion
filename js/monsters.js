@@ -1,5 +1,6 @@
 var zombies = [];
 var zombie_code = 65025;
+var boss_code = 65026;
 var the_zombie = new Object ();
 the_zombie.started_loading = false;
 the_zombie.max_chase_d_sq = 100.0; // 8m
@@ -24,7 +25,9 @@ function load_monsters () {
 		the_zombie.M_loc = gl.getUniformLocation (the_zombie.sp, "M");
 		the_zombie.t_loc = gl.getUniformLocation (the_zombie.sp, "t");
 		the_zombie.tex = load_texture ("img/zombie.png", true, false);
+		the_zombie.anton_tex = load_texture ("img/antonsk.png", true, false);
 		the_zombie.vao = parse_obj_into_vbos ("mesh/zombie.obj");
+		the_zombie.attack_vao = parse_obj_into_vbos ("mesh/zombie_attack.obj");
 		the_zombie.first_draw = true;
 		the_zombie.is_loaded = function () {
 			if (this.tex.loaded && this.vao.loaded && this.sp.linked) {
@@ -38,15 +41,29 @@ function load_monsters () {
 	for (var i = 0; i < map.length; i++) {
 		
 		if (zombie_code == map[i]) {
-		 var zombie = new Object ();
-		 zombie.world_pos = [i % 32 * 2.0, 0.0, Math.floor (i / 32) * 2.0];
-		 zombie.M = translate_mat4 (identity_mat4 (), zombie.world_pos);
-		 zombie.alive = true;
-		 zombie.lost_sight_timer = 0.0;
-		 zombie.heading = 0.0;
-		 zombie.swipe_cdown = 0.0;
-		 zombie.health = 100;
-		 zombies.push (zombie);
+			var zombie = new Object ();
+			zombie.is_attacking = false;
+			zombie.world_pos = [i % 32 * 2.0, 0.0, Math.floor (i / 32) * 2.0];
+			zombie.M = translate_mat4 (identity_mat4 (), zombie.world_pos);
+			zombie.alive = true;
+			zombie.lost_sight_timer = 0.0;
+			zombie.heading = 0.0;
+			zombie.swipe_cdown = 0.0;
+			zombie.health = 100;
+			zombie.boss = false;
+			zombies.push (zombie);
+		} else if (boss_code == map[i]) {
+			var zombie = new Object ();
+			zombie.is_attacking = false;
+			zombie.world_pos = [i % 32 * 2.0, 0.0, Math.floor (i / 32) * 2.0];
+			zombie.M = translate_mat4 (identity_mat4 (), zombie.world_pos);
+			zombie.alive = true;
+			zombie.lost_sight_timer = 0.0;
+			zombie.heading = 0.0;
+			zombie.swipe_cdown = 0.0;
+			zombie.health = 1000;
+			zombie.boss = true;
+			zombies.push (zombie);
 		}
 	}
 }
@@ -122,6 +139,7 @@ function update_monsters (s) {
 		if (!zombies[i].alive) {
 			continue;
 		}
+		zombies[i].is_attacking = false;
 		
 		zombies[i].hurt_cd -= s;
 		
@@ -147,7 +165,11 @@ function update_monsters (s) {
 					gui.set_score (gui.score + 10);
 					continue;
 				} else {
-					zombies[i].hurt_cd = 1.0;
+					if (zombies[i].boss) {
+						zombies[i].hurt_cd = 0.1;
+					} else {
+						zombies[i].hurt_cd = 1.0;
+					}
 					sounds.hit_zomb.play ();
 				}
 			}
@@ -164,16 +186,26 @@ function update_monsters (s) {
 			var l_f = [cam_fwd[0] * 100.0, cam_fwd[2] * 100.0];
 			l_f = add_vec2_vec2 (l_i, l_f);
 			var d = dist_p_to_l (p, l_i, l_f);
-			console.log (d);
 			if (d < 1.0) {
 				zombies[i].health -= 50;
 				if (zombies[i].health <= 0) {
 					zombies[i].alive = false;
 					sounds.zomb_die.play ();
-					gui.set_score (gui.score + 10);
+					if (zombies[i].boss) {
+						gui.set_score (gui.score + 100);
+						var mapdrop = world_to_map (zombies[i].world_pos);
+						var drop_i = mapdrop[1] * 32 + mapdrop[0];
+						map[drop_i] = 16581384;
+					} else {
+						gui.set_score (gui.score + 10);
+					}
 					continue;
 				} else {
-					zombies[i].hurt_cd = 1.0;
+					if (zombies[i].boss) {
+						zombies[i].hurt_cd = 0.1;
+					} else {
+						zombies[i].hurt_cd = 1.0;
+					}
 					sounds.hit_zomb.play ();
 				}
 			}
@@ -192,10 +224,13 @@ function update_monsters (s) {
 			continue;
 		}
 		
+		if (zombies[i].swipe_cdown > 0.2) {
+			zombies[i].is_attacking = true;
+		}
+		zombies[i].swipe_cdown -= s;
 		// if dist to player < some length2 then swipe. and continue.
 		if (d_sq <= the_zombie.attack_d_sq) {
 			//console.log ("SWIPE!");
-			zombies[i].swipe_cdown -= s;
 			if (zombies[i].swipe_cdown <= 0.0) {
 				zombies[i].swipe_cdown = 1.0;
 				sounds.zombie_punch.play();
@@ -263,15 +298,22 @@ function draw_monsters (s) {
 		gl.uniformMatrix4fv (the_zombie.PV_loc, gl.FALSE, new Float32Array (PV));
 		unis += 2;
 	}
-	// bind vao
-	vao_ext.bindVertexArrayOES (the_zombie.vao);
 	gl.activeTexture (gl.TEXTURE0);
-	gl.bindTexture (gl.TEXTURE_2D, the_zombie.tex);
-	// loop zombies
 	for (var i = 0; i < zombies.length; i++) {
 		// TODO -- draw dead sprite
 		if (!zombies[i].alive) {
 			continue;
+		}
+		if (zombies[i].boss) {
+			gl.bindTexture (gl.TEXTURE_2D, the_zombie.anton_tex);
+		} else {
+			gl.bindTexture (gl.TEXTURE_2D, the_zombie.tex);
+		}
+		// bind vao
+		if (zombies[i].is_attacking) {
+			vao_ext.bindVertexArrayOES (the_zombie.attack_vao);
+		} else {
+			vao_ext.bindVertexArrayOES (the_zombie.vao);
 		}
 		// if distance too far or behind cam -- reject
 		// culling

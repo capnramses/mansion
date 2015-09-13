@@ -15,29 +15,64 @@ function init_title () {
 	title.sp = build_shader ("title.vert", "title.frag", ["vp"]);
 	title.offset_loc = gl.getUniformLocation (title.sp, "offset");
 	title.scale_loc = gl.getUniformLocation (title.sp, "scale");
+
+	title.timer = 0.0;
+	title.pressspace_el = document.getElementById ("pressspace_el");
 }
 
-function update_title () {
+function update_title (s) {
 	// space bar
 	if (is_key_down (32)) {
 		game_state = "story";
+		title.pressspace_el.style.color = "lightgray";
+		return;
+	}
+	title.timer += s;
+	if (title.timer > 0.5) {
+		title.pressspace_el.style.visibility = "visible";
+		if (title.timer > 1.0) {
+			title.timer = 0.0;
+		}
+	} else {
+		title.pressspace_el.style.visibility = "hidden";
 	}
 }
 
-function update_story () {
+function update_story (s) {
 	// space bar
 	if (is_key_down (32)) {
 		game_state = "instruct";
+		return;
+	}
+	title.timer += s;
+	if (title.timer > 0.5) {
+		title.pressspace_el.style.visibility = "visible";
+		if (title.timer > 1.0) {
+			title.timer = 0.0;
+		}
+	} else {
+		title.pressspace_el.style.visibility = "hidden";
 	}
 }
 
-function update_instruct () {
+function update_instruct (s) {
 	// space bar
 	if (is_key_down (32)) {
+		title.pressspace_el.style.visibility = "hidden";
 		game_state = "playing";
 		console.log ("game play state started");
 		// make GUI visible
 		gui.show (true);
+		return;
+	}
+	title.timer += s;
+	if (title.timer > 0.5) {
+		title.pressspace_el.style.visibility = "visible";
+		if (title.timer > 1.0) {
+			title.timer = 0.0;
+		}
+	} else {
+		title.pressspace_el.style.visibility = "hidden";
 	}
 }
 

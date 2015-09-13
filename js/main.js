@@ -16,11 +16,15 @@ shotgun.attack_countd = 0.0;
 shotgun.M = translate_mat4 (rotate_y_deg (identity_mat4 (), 10.0),
 	[-0.75, -1.2, 1.2]);
 var silver_key_tex;
+var gold_key_tex;
 var crown_tex;
+var shells_tex;
 var medkit_tex;
 var shotgun_tex;
 var katja_tex;
 var debug_el = document.getElementById ("debug");
+var lost_el = document.getElementById ("lost_el");
+var won_el = document.getElementById ("won_el");
 
 function load_map () {
 	var image = new Image();
@@ -77,12 +81,15 @@ function init () {
 	heckler.nthingtosee_tex = load_texture ("img/nthgtosee.png", true, false);
 	heckler.anton_tex = load_texture ("img/anton.png", true, false);
 	silver_key_tex = load_texture ("img/silver_key.png", true, false);
+	gold_key_tex = load_texture ("img/gold_key.png", true, false);
 	medkit_tex = load_texture ("img/medkit.png", true, false);
 	shotgun_tex = load_texture ("img/shotgun.png", true, false);
 	puff.tex = load_texture ("img/shot.png", true, false);
 	crown_tex = load_texture ("img/crown.png", true, false);
+	shells_tex = load_texture ("img/shells.png", true, false);
 	katja_tex = load_texture ("img/katja.png", true, false);
 	heckler.silver_door_tex = load_texture ("img/silver_door.png", true, false);
+	heckler.gold_door_tex = load_texture ("img/gold_door.png", true, false);
 	heckler.bars_tex = load_texture ("img/bars.png", true, false);
 	heckler.vao = parse_obj_into_vbos ("mesh/wall.obj");
 	heckler.first_draw = true;
@@ -182,14 +189,19 @@ function main_loop () {
 	var elapsed_s = elapsed_millis / 1000.0;
 	
 	switch (game_state) {
+		case "won":
+			break;
+		case "lost":
+			// TODO -- allow restart?
+			break;
 		case "title":
-			update_title ();
+			update_title (elapsed_s);
 			break;
 		case "story":
-			update_story ();
+			update_story (elapsed_s);
 			break;
 		case "instruct":
-			update_instruct ();
+			update_instruct (elapsed_s);
 			break;
 		case "playing":
 			// absolutely wait until the map is loaded before playing
@@ -316,6 +328,12 @@ function main_loop () {
 	} // endswitch game state
 	
 	switch (game_state) {
+		case "won":
+			
+			break;
+		case "lost":
+			
+			break;
 		case "title":
 			gl.viewport (0, 0, canvas.clientWidth, canvas.clientHeight);
 			gl.clear (gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -396,6 +414,8 @@ function main_loop () {
 					}
 				// zombie
 				} else if (map[i] < 65536) {
+				// boss
+				} else if (map[i] < 65537) {
 				// arch
 				} else if (map[i] == 8355968 || map[i] == 4177984) {
 					if (arch.is_loaded ()) {
@@ -482,6 +502,15 @@ function main_loop () {
 				// katja
 				} else if (map[i] == 16581381) {
 				
+				// shells
+				} else if (map[i] == 16581382) {
+				
+				// gold door
+				} else if (map[i] == 16581383) {
+				
+				// gold key
+				} else if (map[i] == 16581384) {
+				
 				} else {
 					console.log (map[i]);
 					return;
@@ -489,14 +518,8 @@ function main_loop () {
 			}
 			
 			// monsters and 3d stuff
-			draw_secrets (elapsed_s);
 			draw_monsters (elapsed_s);
 	
-			// transparent stuff pass
-			gl.enable (gl.BLEND);
-			gl.blendFunc (gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-			gl.blendEquation(gl.FUNC_ADD);
-			
 			var tr_list = [];
 			
 			//gl.disable (gl.DEPTH_TEST);
@@ -556,11 +579,33 @@ function main_loop () {
 					var d = sub_vec3_vec3 (map_pos, cam_pos);
 					var m = length2_vec3 (d);
 					tr_list.push ([i, m]);
+				// shells
+				} else if (map[i] == 16581382) {
+					var map_pos = [i % 32 * 2.0, 1.0, Math.floor (i / 32) * 2.0];
+					var d = sub_vec3_vec3 (map_pos, cam_pos);
+					var m = length2_vec3 (d);
+					tr_list.push ([i, m]);
+				// gold door
+				} else if (map[i] == 16581383) {
+					var map_pos = [i % 32 * 2.0, 1.0, Math.floor (i / 32) * 2.0];
+					var d = sub_vec3_vec3 (map_pos, cam_pos);
+					var m = length2_vec3 (d);
+					tr_list.push ([i, m]);
+				// gold key
+				} else if (map[i] == 16581384) {
+					var map_pos = [i % 32 * 2.0, 1.0, Math.floor (i / 32) * 2.0];
+					var d = sub_vec3_vec3 (map_pos, cam_pos);
+					var m = length2_vec3 (d);
+					tr_list.push ([i, m]);
 				} // endif
 			} // endfor
 			
 			tr_list.sort (function (a, b) { return b[1] - a[1]; } );
 			
+			// transparent stuff pass
+			gl.enable (gl.BLEND);
+			gl.blendFunc (gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+			gl.blendEquation(gl.FUNC_ADD);
 			gl.activeTexture (gl.TEXTURE0);
 			for (var i = 0; i < tr_list.length; i++) {
 				if (tr_list[i][1] > 900.0) {
@@ -704,7 +749,8 @@ function main_loop () {
 							new Float32Array (T));
 						unis++;
 						if (cam_dirty) {
-							gl.uniformMatrix4fv (torchlight.PV_loc, gl.FALSE, new Float32Array (PV));
+							gl.uniformMatrix4fv (torchlight.PV_loc, gl.FALSE,
+								new Float32Array (PV));
 							unis++;
 						}
 						
@@ -712,11 +758,70 @@ function main_loop () {
 						gl.drawArrays (gl.TRIANGLE_STRIP, 0, 4);
 						draws++;
 					} // endif
+				// shells
+				} else if (map[tr_list[i][0]] == 16581382) {
+					if (torchlight.is_loaded () && shells_tex.loaded) {
+						gl.useProgram (heckler.sp);
+						gl.activeTexture (gl.TEXTURE0);
+						gl.bindTexture (gl.TEXTURE_2D, shells_tex);
+						var map_pos = [tr_list[i][0] % 32 * 2.0, 0.25,
+							Math.floor (tr_list[i][0] / 32) * 2.0];
+						var dist3d = sub_vec3_vec3 (map_pos, cam_pos);
+						var dir3d = normalise_vec3 (dist3d);
+						var hdng = direction_to_heading ([dir3d[0], 0.0, -dir3d[2]]);
+						var S = scale_mat4 (identity_mat4 (), [0.25, 0.25, 0.25]);
+						var R = rotate_y_deg (S, -hdng);
+						var T = translate_mat4 (R, map_pos);
+						gl.uniformMatrix4fv (heckler.M_loc, gl.FALSE,
+							new Float32Array (T));
+						unis++;
+						vao_ext.bindVertexArrayOES (torchlight.vao);
+						gl.drawArrays (gl.TRIANGLE_STRIP, 0, 4);
+						draws++;
+					} // endif
+				// gold door
+				} else if (map[tr_list[i][0]] == 16581383) {
+					if (heckler.gold_door_tex.loaded) {
+						gl.useProgram (heckler.sp);
+						gl.bindTexture (gl.TEXTURE_2D, heckler.gold_door_tex);
+						var map_pos = [tr_list[i][0] % 32 * 2.0, 0.0,
+							Math.floor (tr_list[i][0] / 32) * 2.0];
+						var M = translate_mat4 (identity_mat4 (), map_pos);
+						gl.uniformMatrix4fv (heckler.M_loc, gl.FALSE,
+							new Float32Array (M));
+						unis++;
+						
+						vao_ext.bindVertexArrayOES (heckler.vao);
+						gl.drawArrays (gl.TRIANGLES, 0, heckler.vao.pc);
+						draws++;
+					}
+				// gold key
+				} else if (map[tr_list[i][0]] == 16581384) {
+					if (torchlight.is_loaded () && gold_key_tex.loaded) {
+						gl.useProgram (heckler.sp);
+						gl.bindTexture (gl.TEXTURE_2D, gold_key_tex);
+						var map_pos = [tr_list[i][0] % 32 * 2.0, 1.0,
+							Math.floor (tr_list[i][0] / 32) * 2.0];
+						var M = inverse_mat4 (look_at (map_pos, cam_pos, [0.0, 1.0, 0.0]));
+						var S = scale_mat4 (identity_mat4 (), [0.25, 0.25, 0.25]);
+						var T = translate_mat4 (S, [0.0, -0.75, 0.0]);
+						M = mult_mat4_mat4 (M, T);
+						gl.uniformMatrix4fv (heckler.M_loc, gl.FALSE,
+							new Float32Array (M));
+						unis++;
+
+						vao_ext.bindVertexArrayOES (torchlight.vao);
+						gl.drawArrays (gl.TRIANGLE_STRIP, 0, 4);
+						draws++;
+					}
 				} // endif
 			} // endfor
 			
 			gl.disable (gl.BLEND);
 			//gl.enable (gl.DEPTH_TEST);
+			
+			// almost certainly in front of cam ahead of other transparent stuff
+			draw_secrets (elapsed_s);
 	
 			// hatchet / UI pass
 			gl.clear (gl.DEPTH_BUFFER_BIT);

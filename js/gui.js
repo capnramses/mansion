@@ -10,6 +10,8 @@ gui.start_loading = function () {
 	gui.heal_timer = 0.0;
 	gui.gold_timer = 0.0;
 	gui.mask_timer = 0.0;
+	gui.death_timer = 0.0;
+	gui.ammo_timer = 0.0;
 	// html elements
 	gui.score_el = document.getElementById ("score_el");
 	gui.health_el = document.getElementById ("health_el");
@@ -51,8 +53,15 @@ gui.is_loaded = function () {
 }
 
 gui.set_health = function (amt) {
+	if (this.death_timer > 0.0) {
+		return; // already dying
+	}
 	this.health = amt;
 	this.health_el.innerHTML = "Health<br />" + amt + "%";
+	if (amt <= 0) {
+		this.death_timer = 1.0;
+		console.log ("died");
+	}
 }
 
 gui.set_score = function (amt) {
@@ -111,6 +120,18 @@ gui.draw = function (s) {
 				draws++;
 			}
 		}
+		if (has_gold_key) {
+			if (gold_key_tex.loaded) {
+				gl.uniform2f (title.offset_loc, 0.0 + 325.0 / 1024,
+					-1.0 + 140.0 / 768);
+				gl.uniform2f (title.scale_loc, 64.0 / 1024,
+					64.0 / 768);
+				unis += 2;
+				gl.bindTexture (gl.TEXTURE_2D, gold_key_tex);
+				gl.drawArrays (gl.TRIANGLE_STRIP, 0, quad.pc);
+				draws++;
+			}
+		}
 		if (has_shotgun) {
 			if (shotgun_tex.loaded) {
 				gl.uniform2f (title.offset_loc, 0.0 + 600.0 / 1024.0,
@@ -154,12 +175,24 @@ gui.draw_cross = function (s) {
 
 	if (this.mask_timer > 0.0) {
 		this.mask_timer -= s;
-		if (this.mask_timer < 0.0) {
+		if (this.mask_timer <= 0.0) {
 			this.mask_timer = 0.0;
 			game_state = "won";
+			won_el.style.visibility = "visible";
 		}
 		// change game state to finished
 		var alpha = 1.0 - this.mask_timer / 3.0;
+		gl.uniform4f (this.cross_colour_loc, 0.0, 0.0, 0.0, alpha);
+		unis++;
+	} else if (this.death_timer > 0.0) {
+		this.death_timer -= s;
+		if (this.death_timer <= 0.0) {
+			this.death_timer = 0.0;
+			game_state = "lost";
+			lost_el.style.visibility = "visible";
+		}
+		// change game state to finished
+		var alpha = 1.0 - this.death_timer;
 		gl.uniform4f (this.cross_colour_loc, 0.0, 0.0, 0.0, alpha);
 		unis++;
 	} else if (this.hurt_timer > 0.0) {
@@ -167,21 +200,28 @@ gui.draw_cross = function (s) {
 		if (this.hurt_timer < 0.0) {
 			this.hurt_timer = 0.0;
 		}
-		gl.uniform4f (this.cross_colour_loc, 1.0, 0.0, 0.0, this.hurt_timer * 0.8);
+		gl.uniform4f (this.cross_colour_loc, 1.0, 0.0, 0.0, this.hurt_timer);
 		unis++;
 	} else if (this.heal_timer > 0.0) {
 		this.heal_timer -= s;
 		if (this.heal_timer < 0.0) {
 			this.heal_timer = 0.0;
 		}
-		gl.uniform4f (this.cross_colour_loc, 0.0, 1.0, 0.0, this.heal_timer * 0.8);
+		gl.uniform4f (this.cross_colour_loc, 0.0, 0.8, 0.0, this.heal_timer);
 		unis++;
 	} else if (this.gold_timer > 0.0) {
 		this.gold_timer -= s;
 		if (this.gold_timer < 0.0) {
 			this.gold_timer = 0.0;
 		}
-		gl.uniform4f (this.cross_colour_loc, 1.0, 1.0, 0.0, this.gold_timer * 0.8);
+		gl.uniform4f (this.cross_colour_loc, 0.8, 0.8, 0.0, this.gold_timer);
+		unis++;
+	} else if (this.ammo_timer > 0.0) {
+		this.ammo_timer -= s;
+		if (this.ammo_timer < 0.0) {
+			this.ammo_timer = 0.0;
+		}
+		gl.uniform4f (this.cross_colour_loc, 0.2, 0.2, 0.8, this.ammo_timer);
 		unis++;
 	}
 	

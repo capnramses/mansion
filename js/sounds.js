@@ -61,4 +61,12 @@ function start_loading_sounds () {
 		urls: ['audio/shotgun.wav'],
 		onload: function () { console.log ("sound loaded: shotgun"); }
 	});
+	sounds.shells = new Howl ({
+		urls: ['audio/shells.wav'],
+		onload: function () { console.log ("sound loaded: shells"); }
+	});
+	sounds.mask = new Howl ({
+		urls: ['audio/mask.wav'],
+		onload: function () { console.log ("sound loaded: mask"); }
+	});
 }

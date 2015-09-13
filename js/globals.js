@@ -5,6 +5,7 @@ var game_state = "title";
 var map = [];
 var map_loaded = false;
 var has_silver_key = false;
+var has_gold_key = false;
 var has_shotgun = false;
 var sel_weap = 0;
 
@@ -23,7 +24,7 @@ function is_wall (map_col, map_row) {
 		return true;
 	}
 	// doors
-	if (map[map_i] == 16581375) {
+	if (map[map_i] == 16581375 || map[map_i] == 16581383) {
 		return true;
 	}
 	return false;
@@ -71,13 +72,27 @@ function pick_up_stuff () {
 		gui.set_ammo (gui.ammo + 8);
 		has_shotgun = true;
 		sel_weap = 1;
+		gui.ammo_timer = 0.75;
 	// mask
 	} else if (map[map_i] == 16581381) {
 		// remove from map
 		map[map_i] = 16646655;
-		// TODO
-		//sounds.get_mask.play();
+		sounds.mask.play();
 		gui.mask_timer = 3.0;
+	// shells
+	} else if (map[map_i] == 16581382) {
+		// remove from map
+		map[map_i] = 16646655;
+		gui.set_ammo (gui.ammo + 4);
+		sounds.shells.play ();
+		gui.ammo_timer = 0.75;
+	// gold key
+	} else if (map[map_i] == 16581384) {
+		// remove from map
+		map[map_i] = 16646655;
+		// add to inventory logic
+		has_gold_key = true;
+		sounds.get_key.play();
 	}
 }
 

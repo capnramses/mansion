@@ -21,12 +21,18 @@ function open_secret () {
 	
 	// 3rd one is silver key door
 	if (map[map_i] == 250 || map[map_i] == 249 || map[map_i] == 248 ||
-		map[map_i] == 16581375) {
+		map[map_i] == 16581375 || map[map_i] == 16581383) {
 		if (map[map_i] == 16581375) {
 			if (!has_silver_key) {
 				return;
 			}
 			has_silver_key = false;
+		}
+		if (map[map_i] == 16581383) {
+			if (!has_gold_key) {
+				return;
+			}
+			has_gold_key = false;
 		}
 	
 		map[map_i] = 16646655; // gap
@@ -38,6 +44,8 @@ function open_secret () {
 	}
 }
 
+//
+// note - does not respect order with other transparent things
 function draw_secrets (s) {
 	if (secrets.length == 0) {
 		return;
@@ -78,6 +86,9 @@ function draw_secrets (s) {
 				break;
 			case 16581375:
 				gl.bindTexture (gl.TEXTURE_2D, heckler.silver_door_tex);
+				break;
+			case 16581383:
+				gl.bindTexture (gl.TEXTURE_2D, heckler.gold_door_tex);
 				break;
 			default:
 				gl.bindTexture (gl.TEXTURE_2D, heckler.anton_tex);
