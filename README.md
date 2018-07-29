@@ -1,4 +1,4 @@
-#The Mansion of Dr Anton#
+# The Mansion of Dr Anton #
 
 This is the source code for the WebGL 3d game I have on my website:
 [antongerdelan.net/dungeo](http://antongerdelan.net/dungeo/)
@@ -10,7 +10,7 @@ the Haunted Mansion, Nightmare 3-D, Ken's Labyrinth.
 
 ![devshot](shot.png)
 
-##Features##
+## Features ##
 
 * awesome low-level WebGL hardware-accelerated 3d browser graphics in retro style
 * directional shading (instead of Phong etc.)
@@ -26,11 +26,11 @@ the Haunted Mansion, Nightmare 3-D, Ken's Labyrinth.
 * handsomest game boss ever
 * secret passages (4 of them!)
 
-##Sound Attrib##
+## Sound Attrib ##
 
 * toccata - wikipedia
 
-##Known Bugs##
+## Known Bugs ##
 
 * sometimes boss doesn't seem to drop the gold key (numerical error with
 location?)
