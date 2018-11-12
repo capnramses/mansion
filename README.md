@@ -1,7 +1,7 @@
 # The Mansion of Dr Anton #
 
 This is the source code for the WebGL 3d game I have on my website:
-[antongerdelan.net/dungeo](http://antongerdelan.net/dungeo/)
+[antongerdelan.net/games/dungeo](http://antongerdelan.net/games/dungeo/)
 
 I made it on a sick day when feeling delirious, and added bits and pieces over
 the next few eves. It was going to be a dungeon explorer but it just turned
